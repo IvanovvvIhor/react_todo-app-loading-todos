@@ -6,24 +6,30 @@ import { getTodos, USER_ID } from './api/todos';
 import { Todo } from './types/Todo';
 import classNames from 'classnames';
 
-const FILTER_ALL = 'All';
-const FILTER_ACTIVE = 'Active';
-const FILTER_COMPLETED = 'Completed';
+enum Filter {
+  All = 'All',
+  Active = 'Active',
+  Completed = 'Completed',
+}
 
-// Unable to load todos
-//         <br />
-//         Title should not be empty
-//         <br />
-//         Unable to add a todo
-//         <br />
-//         Unable to delete a todo
-//         <br />
-//         Unable to update a todo
+enum Errors {
+  Load = 'Unable to load todos',
+  Title = 'Title should not be empty',
+  UnableTodo = 'Unable to add a todo',
+  UnableDelete = 'Unable to delete a todo',
+  UnableUpdate = 'Unable to update a todo',
+}
+
+const filterOptions = [
+  { id: 'all', title: Filter.All, href: '#/' },
+  { id: 'active', title: Filter.Active, href: '#/active' },
+  { id: 'completed', title: Filter.Completed, href: '#/completed' },
+];
 
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
-  const [filterStatus, setFilterStatus] = useState(FILTER_ALL);
+  const [filterStatus, setFilterStatus] = useState(Filter.All);
 
   useEffect(() => {
     const loadTodos = async () => {
@@ -32,10 +38,8 @@ export const App: React.FC = () => {
 
         setTodos(data);
       } catch (error) {
-        // Замість throw error, встановлюємо стан помилки для UI
-        setErrorMessage('Unable to load todos');
+        setErrorMessage(Errors.Load);
 
-        // Автоматично ховаємо помилку через 3 секунди, як вимагає ТЗ
         setTimeout(() => setErrorMessage(''), 3000);
       }
     };
@@ -45,11 +49,11 @@ export const App: React.FC = () => {
 
   const visibleTodos = useMemo(() => {
     switch (filterStatus) {
-      case FILTER_ACTIVE:
+      case Filter.Active:
         return todos.filter(todo => {
           return todo.completed === false;
         });
-      case FILTER_COMPLETED:
+      case Filter.Completed:
         return todos.filter(todo => {
           return todo.completed === true;
         });
@@ -144,44 +148,19 @@ export const App: React.FC = () => {
 
             {/* Active link should have the 'selected' class */}
             <nav className="filter" data-cy="Filter">
-              <a
-                href="#/"
-                className={classNames('filter__link', {
-                  selected: filterStatus === FILTER_ALL,
-                })}
-                data-cy="FilterLinkAll"
-                onClick={() => {
-                  setFilterStatus(FILTER_ALL);
-                }}
-              >
-                All
-              </a>
-
-              <a
-                href="#/active"
-                className={classNames('filter__link', {
-                  selected: filterStatus === FILTER_ACTIVE,
-                })}
-                data-cy="FilterLinkActive"
-                onClick={() => {
-                  setFilterStatus(FILTER_ACTIVE);
-                }}
-              >
-                Active
-              </a>
-
-              <a
-                href="#/completed"
-                className={classNames('filter__link', {
-                  selected: filterStatus === FILTER_COMPLETED,
-                })}
-                data-cy="FilterLinkCompleted"
-                onClick={() => {
-                  setFilterStatus(FILTER_COMPLETED);
-                }}
-              >
-                Completed
-              </a>
+              {filterOptions.map(({ id, title, href }) => (
+                <a
+                  key={id}
+                  href={href}
+                  className={classNames('filter__link', {
+                    selected: filterStatus === title,
+                  })}
+                  data-cy={`FilterLink${title}`}
+                  onClick={() => setFilterStatus(title)}
+                >
+                  {title}
+                </a>
+              ))}
             </nav>
 
             {/* this button should be disabled if there are no completed todos */}
